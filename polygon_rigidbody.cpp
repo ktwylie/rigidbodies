@@ -86,19 +86,19 @@ public:
 class rigidbody : public polygon {
 private: 
 	double mass; //Mass of this body, distribution determined by COM/origin. 
-	ktw::point2 velocity; //Change in position per timestep. 
+	ktw::point velocity; //Change in position per timestep. 
 	double angular_velocity; //Change in orientation per timestep. 
 	double temperature; //Temperature of this rigidbody in Kelvin. 
 	std::vector<rigidbody*> in_contact; //Bodies this one is currently in physical contact with. 
 public: 
-	rigidbody(ktw::point2 ipos, std::vector<ktw::point2> ipts, double imass, double itemp, ktw::point2 iv={0.0,0.0}, double iav=0.0); //Same as polygon constructor. 
-	rigidbody(std::vector<ktw::point2> ipts, double imass, double itemp, ktw::point2 iv={0.0,0.0}, double iav=0.0); //Same as polygon constructor. 
-	rigidbody(polygon p, double imass, double itemp, ktw::point2 iv={0.0,0.0}, double iav=0.0); //Construct a rigidbody from a polygon. 
+	rigidbody(ktw::point ipos, std::vector<ktw::point> ipts, double imass, double itemp, ktw::point iv={0.0,0.0}, double iav=0.0); //Same as polygon constructor. 
+	rigidbody(std::vector<ktw::point> ipts, double imass, double itemp, ktw::point iv={0.0,0.0}, double iav=0.0); //Same as polygon constructor. 
+	rigidbody(polygon p, double imass, double itemp, ktw::point iv={0.0,0.0}, double iav=0.0); //Construct a rigidbody from a polygon. 
 	//Explicit attribute access. 
 	double getmass(); //Yield the mass. 
 	void setmass(double nmass); //Set the mass. 
-	ktw::point2 getvelocity(); //Yield the velocity. 
-	void setvelocity(ktw::point2 nvelocity); //Set the velocity. 
+	ktw::point getvelocity(); //Yield the velocity. 
+	void setvelocity(ktw::point nvelocity); //Set the velocity. 
 	double getangularvelocity(); //Yield the rate of rotation. 
 	void setangularvelocity(double nangvel); //Set the rate of rotation. 
 	double gettemperature(); //Yield the temperature. 
@@ -108,19 +108,19 @@ public:
 	bool isstatic(); //Returns if this body is of a sort that it will be unaffected by certain interactions. 
 	//Velocity affecting. 
 	void dampen(double multiplier); //Scale velocities (usually 0 < multiplier < 1). 
-	void accelerate(ktw::point2 acc_lin, double acc_ang); //Accelerate translationally and rotationally. 
+	void accelerate(ktw::point acc_lin, double acc_ang); //Accelerate translationally and rotationally. 
 	//Force affecting. 
-	void force(ktw::point2 f); //Apply a strictly translational force. 
-	void torque(ktw::point2 f, ktw::point2 r); //Apply a strictly rotational force at some radial distance. 
-	void compositeforce(ktw::point2 f, ktw::point2 r); //Apply a force inducing possible translation/rotation. 
+	void force(ktw::point f); //Apply a strictly translational force. 
+	void torque(ktw::point f, ktw::point r); //Apply a strictly rotational force at some radial distance. 
+	void compositeforce(ktw::point f, ktw::point r); //Apply a force inducing possible translation/rotation. 
 	//Physical interaction. 
-	bool collide(rigidbody *rb, double damping = 1.0, ktw::point2* collisionpoint = NULL, size_t exclude_vertex_i = -1); //Elastically collide with some other rigidbody, if applicable. 
+	bool collide(rigidbody *rb, double damping = 1.0, ktw::point* collisionpoint = NULL, size_t exclude_vertex_i = -1); //Elastically collide with some other rigidbody, if applicable. 
 	static void deoverlap(std::vector<rigidbody*> gons, double shift_distance); //Perform a single deoverlap pass over a list of rigidbodies. 
 	void thermal_conduct(rigidbody *rb, bool colliding, double conductivity); //Thermally conduct temperature ('colliding' reuses value from the 'collide' function). 
 	void make_contact(rigidbody *rb); //Indicates that these bodies are now in physical contact. 
 	//Simulation. 
 	void tick(); //Apply velocities, advancing one simulation timestep. 
-	static void tick_all(std::vector<rigidbody*> gons, double gravitation, double collision_damping, double air_damping, double conductivity, double deoverlap_setdist, double deoverlap_scale, unsigned deoverlap_iterations, ktw::point2 *collisionpoint); 
+	static void tick_all(std::vector<rigidbody*> gons, double gravitation, double collision_damping, double air_damping, double conductivity, double deoverlap_setdist, double deoverlap_scale, unsigned deoverlap_iterations, ktw::point *collisionpoint); 
 }; 
 
 /*
@@ -128,10 +128,10 @@ public:
 */
 
 /*
-	ktw::polygon
+	polygon
 */
 
-void ktw::polygon::precompute_boundingbox() {
+void polygon::precompute_boundingbox() {
 	std::vector<ktw::point> bb = ktw::bounding_box(pts); 
 	bb1 = bb[0]; 
 	bb1.x += pos.x; //AN: Bounding box in absolute space, not relative to origin. 
@@ -141,7 +141,7 @@ void ktw::polygon::precompute_boundingbox() {
 	bb2.y += pos.y; 
 }
 
-void ktw::polygon::precompute_normals() {
+void polygon::precompute_normals() {
 	normals = {}; 
 	std::vector<ktw::point> thisside; 
 	for(size_t i = 0; i < size(); i++) { //AN: Surface normals are free vectors. 
@@ -150,7 +150,7 @@ void ktw::polygon::precompute_normals() {
 	}
 }
 
-void ktw::polygon::precompute_centerofmass() {
+void polygon::precompute_centerofmass() {
 	com = ktw::point{0.0, 0.0}; 
 	ktw::point t; 
 	for(size_t i = 0; i < pts.size(); i++) {
@@ -164,7 +164,7 @@ void ktw::polygon::precompute_centerofmass() {
 	com.y += pos.y; 
 }
 
-void ktw::polygon::precompute_perimeter_area() {
+void polygon::precompute_perimeter_area() {
 	//Area. 
 	plane_area = 0.0; 
 	for(size_t i = 0; i < pts.size() - 1; i++) {
@@ -179,7 +179,7 @@ void ktw::polygon::precompute_perimeter_area() {
 	for(size_t i = 0; i < size(); i++) plane_perimeter += sidelength(i); 
 }
 
-void ktw::polygon::precompute_angles() {
+void polygon::precompute_angles() {
 	angles = {}; 
 	double a, b, c; 
 	for(size_t i = 0; i < pts.size(); i++) {
@@ -191,16 +191,16 @@ void ktw::polygon::precompute_angles() {
 	}
 }
 
-void ktw::polygon::precompute_sidelengths() {
+void polygon::precompute_sidelengths() {
 	lengths = {}; 
 	for(size_t i = 0; i < size(); i++) lengths.push_back(ktw::distance(side(i)[0], side(i)[1])); 
 }
 
-ktw::polygon::polygon() {
-	*this = ktw::polygon::regular_polygon(3, {0.0, 0.0}, 1.0); 
+polygon::polygon() {
+	*this = polygon::regular_polygon(3, {0.0, 0.0}, 1.0); 
 }
 
-ktw::polygon::polygon(ktw::point ipos, std::vector<ktw::point> ipts) { 
+polygon::polygon(ktw::point ipos, std::vector<ktw::point> ipts) { 
 	pos = ipos; pts = ipts; 
 	precompute_boundingbox(); 
 	precompute_centerofmass(); 
@@ -210,7 +210,7 @@ ktw::polygon::polygon(ktw::point ipos, std::vector<ktw::point> ipts) {
 	precompute_perimeter_area(); 
 }
 
-ktw::polygon::polygon(std::vector<ktw::point> ipts) {
+polygon::polygon(std::vector<ktw::point> ipts) {
 	//Compute the average position of those points. 
 	ktw::point com{0.0, 0.0}, t; 
 	for(size_t i = 0; i < ipts.size(); i++) {
@@ -228,11 +228,11 @@ ktw::polygon::polygon(std::vector<ktw::point> ipts) {
 	*this = polygon(com, ipts); 
 }
 
-size_t ktw::polygon::size() {
+size_t polygon::size() {
 	return pts.size(); 
 }
 
-std::vector<ktw::point> ktw::polygon::side(size_t i) {
+std::vector<ktw::point> polygon::side(size_t i) {
 	size_t index = i % size(), indexp1 = (i + 1) % size(); 
 	ktw::point s1 = pts[index]; 
 	s1.x += pos.x; //AN: Positions of side in absolute space. 
@@ -243,14 +243,14 @@ std::vector<ktw::point> ktw::polygon::side(size_t i) {
 	return std::vector<ktw::point>{s1, s2}; 
 }
 
-void ktw::polygon::move(ktw::point dp) {
+void polygon::move(ktw::point dp) {
 	pos.x += dp.x; 
 	pos.y += dp.y; 
 	precompute_boundingbox(); 
 	precompute_centerofmass(); 
 }
 
-bool ktw::polygon::ray_intersection(ktw::point raysrc, ktw::point raydst, std::vector<ktw::point>* intersections, std::vector<size_t>* sides) {
+bool polygon::ray_intersection(ktw::point raysrc, ktw::point raydst, std::vector<ktw::point>* intersections, std::vector<size_t>* sides) {
 	//Check if both raysrc and raydst of ray is out of bounding box. 
 	if(!ktw::in_bounding_box(raysrc, bb1, bb2) && !ktw::in_bounding_box(raydst, bb1, bb2)) return false; 
 	//At this point there is a possibility of intersection, check for it. 
@@ -267,7 +267,7 @@ bool ktw::polygon::ray_intersection(ktw::point raysrc, ktw::point raydst, std::v
 	return didsect; 
 }
 
-void ktw::polygon::rotate(double dth) {
+void polygon::rotate(double dth) {
 	double r00 = cos(dth), r10 = -sin(dth); //Rotation matrix. 
 	double r01 = -r10,     r11 = r00; 
 	double tx, ty; 
@@ -282,7 +282,7 @@ void ktw::polygon::rotate(double dth) {
 	precompute_normals(); 
 }
 
-void ktw::polygon::scale(double ds) {
+void polygon::scale(double ds) {
 	for(size_t i = 0; i < pts.size(); i++) {
 		pts[i].x *= ds; 
 		pts[i].y *= ds; 
@@ -292,22 +292,22 @@ void ktw::polygon::scale(double ds) {
 	precompute_perimeter_area(); 
 }
 
-ktw::point ktw::polygon::center_of_mass() { return com; }
+ktw::point polygon::center_of_mass() { return com; }
 
-ktw::polygon ktw::polygon::regular_polygon(unsigned n, ktw::point origin, double scale) {
+polygon polygon::regular_polygon(unsigned n, ktw::point origin, double scale) {
 	double dth = ktw::tau / n; 
 	std::vector<ktw::point> vertices; 
 	for(double th = 0.0; th < ktw::tau; th += dth) vertices.push_back(ktw::point{scale*cos(th), scale*sin(th)}); 
 	return polygon(origin, vertices); 
 }
 
-ktw::point ktw::polygon::position() { return pos; }
+ktw::point polygon::position() { return pos; }
 
-std::vector<double> ktw::polygon::normal(size_t i) { return normals[i % size()]; }
+std::vector<double> polygon::normal(size_t i) { return normals[i % size()]; }
 
-double ktw::polygon::area() { return plane_area; }
+double polygon::area() { return plane_area; }
 
-bool ktw::polygon::polygon_intersection(ktw::polygon p, std::vector<ktw::point>* intersections) {
+bool polygon::polygon_intersection(polygon p, std::vector<ktw::point>* intersections) {
 	//Check the bounding boxes of us and them first. 
 	std::vector<ktw::point> ourbb = bounding_box(), theirbb = p.bounding_box(); 
 	ktw::point ourbb1 = ourbb[0], ourbb2 = ourbb[1], theirbb1 = theirbb[0], theirbb2 = theirbb[1]; 
@@ -340,15 +340,15 @@ bool ktw::polygon::polygon_intersection(ktw::polygon p, std::vector<ktw::point>*
 	return didsect; 
 }
 
-std::vector<ktw::point> ktw::polygon::bounding_box() { return std::vector<ktw::point>{bb1, bb2}; }
+std::vector<ktw::point> polygon::bounding_box() { return std::vector<ktw::point>{bb1, bb2}; }
 
-void ktw::polygon::set(ktw::point np) {
+void polygon::set(ktw::point np) {
 	pos = np; 
 	precompute_boundingbox(); 
 	precompute_centerofmass(); 
 }
 
-bool ktw::polygon::point_within(ktw::point pt, ktw::point infinity) {
+bool polygon::point_within(ktw::point pt, ktw::point infinity) {
 	if(!ktw::in_bounding_box(pt, bb1, bb2)) return false; //Check bounding box. 
 	//bool didsect = false; 
 	std::vector<ktw::point> intersections; 
@@ -372,7 +372,7 @@ bool ktw::polygon::point_within(ktw::point pt, ktw::point infinity) {
 	return intersections.size() % 2 != 0; //If the ray intersects an odd number of times, the point is within. 
 }
 
-double ktw::polygon::distance_to(ktw::point pt) {
+double polygon::distance_to(ktw::point pt) {
 	double mindist = 1.0 / 0.0; //AN: Okay since values will always be less than this. 
 	double a, b, c, alpha, beta; 
 	const double piover2 = ktw::pi / 2.0; 
@@ -394,23 +394,23 @@ double ktw::polygon::distance_to(ktw::point pt) {
 			double dist_beta_ep = ktw::distance(pt, thisside[1]); 
 			if(dist_beta_ep < mindist) mindist = dist_beta_ep; 
 		} else { //This should never happen. 
-			std::cout << "THIS SHOULD NOT HAVE HAPPENED: SEE \'ktw::polygon::distance_to\' METHOD and investigate." << std::endl; 
+			std::cout << "THIS SHOULD NOT HAVE HAPPENED: SEE \'polygon::distance_to\' METHOD and investigate." << std::endl; 
 			continue; 
 		}
 	}
 	return (point_within(pt)) ? -mindist : mindist; 
 }
 
-ktw::point ktw::polygon::vertex(size_t i) { return pts[i % size()]; }
+ktw::point polygon::vertex(size_t i) { return pts[i % size()]; }
 
-double ktw::polygon::angle(size_t i) { return angles[i % size()]; }
+double polygon::angle(size_t i) { return angles[i % size()]; }
 
-double ktw::polygon::sidelength(size_t i) { return lengths[i % size()]; }
+double polygon::sidelength(size_t i) { return lengths[i % size()]; }
 
-double ktw::polygon::perimeter() { return plane_perimeter; }
+double polygon::perimeter() { return plane_perimeter; }
 
-ktw::polygon ktw::polygon::pythagorean_triple(unsigned m, unsigned n, unsigned k, ktw::point origin, double scale) {
-	if(m <= n || m == 0 || n == 0) return ktw::polygon::regular_polygon(3, origin, scale); 
+polygon polygon::pythagorean_triple(unsigned m, unsigned n, unsigned k, ktw::point origin, double scale) {
+	if(m <= n || m == 0 || n == 0) return polygon::regular_polygon(3, origin, scale); 
 	double alen = scale * k * (m*m - n*n), blen = scale * k * 2*m*n; 
 	ktw::point a = origin; 
 	ktw::point b{origin.x + alen, origin.y}; 
@@ -418,7 +418,7 @@ ktw::polygon ktw::polygon::pythagorean_triple(unsigned m, unsigned n, unsigned k
 	return polygon(std::vector<ktw::point>{a, b, c}); 
 }
 
-void ktw::polygon::transform(double r1c1, double r1c2, double r2c1, double r2c2) {
+void polygon::transform(double r1c1, double r1c2, double r2c1, double r2c2) {
 	for(size_t i = 0; i < pts.size(); i++) {
 		pts[i] = ktw::point{r1c1*pts[i].x + r1c2*pts[i].y, r2c1*pts[i].x + r2c2*pts[i].y}; 
 	}
@@ -435,21 +435,21 @@ void ktw::polygon::transform(double r1c1, double r1c2, double r2c1, double r2c2)
 	rigidbody
 */
 
-rigidbody::rigidbody(ktw::point2 ipos, std::vector<ktw::point2> ipts, double imass, double itemp, ktw::point2 iv, double iav) : polygon(ipos, ipts) {
+rigidbody::rigidbody(ktw::point ipos, std::vector<ktw::point> ipts, double imass, double itemp, ktw::point iv, double iav) : polygon(ipos, ipts) {
 	mass = imass; 
 	velocity = iv; 
 	angular_velocity = iav; 
 	temperature = itemp; 
 }
 
-rigidbody::rigidbody(std::vector<ktw::point2> ipts, double imass, double itemp, ktw::point2 iv, double iav) : polygon(ipts) {
+rigidbody::rigidbody(std::vector<ktw::point> ipts, double imass, double itemp, ktw::point iv, double iav) : polygon(ipts) {
 	mass = imass; 
 	velocity = iv; 
 	angular_velocity = iav; 
 	temperature = itemp; 
 }
 
-rigidbody::rigidbody(polygon p, double imass, double itemp, ktw::point2 iv, double iav) {
+rigidbody::rigidbody(polygon p, double imass, double itemp, ktw::point iv, double iav) {
 	//Set rigidbody parameters. 
 	mass = imass; 
 	velocity = iv; 
@@ -470,7 +470,7 @@ rigidbody::rigidbody(polygon p, double imass, double itemp, ktw::point2 iv, doub
 	precompute_perimeter_area(); 
 }
 
-void rigidbody::force(ktw::point2 f) {
+void rigidbody::force(ktw::point f) {
 	if(mass == 0.0) return; //Disregard massless objects. 
 	//Apply force to this body. 
 	velocity.x += f.x / mass; 
@@ -479,7 +479,7 @@ void rigidbody::force(ktw::point2 f) {
 	//for(size_t i = 0; i < in_contact.size(); i++) in_contact[i]->force(f); 
 }
 
-void rigidbody::torque(ktw::point2 f, ktw::point2 r) { //AN: I can't quite shake the feeling that something's wrong here. 
+void rigidbody::torque(ktw::point f, ktw::point r) { //AN: I can't quite shake the feeling that something's wrong here. 
 	if(mass == 0.0) return; //Disregard massless objects. 
 	//Apply force to this body. 
 	double t = f.y*r.x - f.x*r.y; //Torque magnitude (AN: 2D cross product). 
@@ -489,10 +489,10 @@ void rigidbody::torque(ktw::point2 f, ktw::point2 r) { //AN: I can't quite shake
 	//...
 }
 
-void rigidbody::compositeforce(ktw::point2 f, ktw::point2 r) {
+void rigidbody::compositeforce(ktw::point f, ktw::point r) {
 	if(mass == 0.0) return; //Disregard massless objects. 
 	//Radial vector pointing towards center. 
-	ktw::point2 rr{-r.x, -r.y}; 
+	ktw::point rr{-r.x, -r.y}; 
 	//Compute component magnitudes. 
 	double fmag = ktw::norm(f), rrmag = ktw::norm(rr); 
 	double component = ktw::dot(f, rr) / (fmag * rrmag); //AN: Starts as cosine. 
@@ -505,8 +505,8 @@ void rigidbody::compositeforce(ktw::point2 f, ktw::point2 r) {
 	//Determine absolute angle of rr and f (so as to apply torque in proper direction). 
 	double f_absang = atan2(f.y, f.x), rr_absang = atan2(rr.y, rr.x); 
 	//Generate & apply component forces. 
-	ktw::point2 radf{lateral * rr.x, lateral * rr.y}; 
-	ktw::point2 tanf{angular * -rr.y, angular * rr.x}; //AN: Perpendicularise rr. 
+	ktw::point radf{lateral * rr.x, lateral * rr.y}; 
+	ktw::point tanf{angular * -rr.y, angular * rr.x}; //AN: Perpendicularise rr. 
 	if(ktw::angle_less_than(f_absang, rr_absang)) {
 		tanf.x = -tanf.x; 
 		tanf.y = -tanf.y; 
@@ -523,7 +523,7 @@ void rigidbody::tick() {
 	rotate(angular_velocity); 
 }
 
-bool rigidbody::collide(rigidbody *rb, double damping, ktw::point2* collisionpoint, size_t exclude_vertex_i) { //29 March '22, to 12 April '22. 
+bool rigidbody::collide(rigidbody *rb, double damping, ktw::point* collisionpoint, size_t exclude_vertex_i) { //29 March '22, to 12 April '22. 
 	if(rb->getmass() == 0.0) return false; //Don't collide with massless objects. 
 
 	//1: Iterate over vertices of this shape, using their next intended positions to determine if any collide with the other shape. 
@@ -536,15 +536,15 @@ bool rigidbody::collide(rigidbody *rb, double damping, ktw::point2* collisionpoi
 		a list of "don't collide again" vertices as well as a "qty_left_to_collide" parameter. 
 	*/
 	size_t colliding_vertex_i = -1; 
-	std::vector<ktw::point2> rb_intersections; 
+	std::vector<ktw::point> rb_intersections; 
 	std::vector<size_t> rb_sidesects; 
-	ktw::point2 vertex_velocity, vertex_position_relative, vertex_position, vertex_position_next; 
+	ktw::point vertex_velocity, vertex_position_relative, vertex_position, vertex_position_next; 
 	for(size_t i = 0; i < size(); i++) {
 		if(i == exclude_vertex_i) continue; //Ignore the vertex collided with last time (22 April '22). 
 		//Computation of the net velocity of this vertex. 
-		ktw::point2 this_position = position(); 
+		ktw::point this_position = position(); 
 		vertex_position_relative = vertex(i); 
-		ktw::point2 orthogonal_at_vertex = ktw::hat(ktw::orthogonal(vertex_position_relative)); 
+		ktw::point orthogonal_at_vertex = ktw::hat(ktw::orthogonal(vertex_position_relative)); 
 		double vertex_angular_speed = ktw::norm(vertex_position_relative) * getangularvelocity(); 
 		vertex_velocity = ktw::sum(getvelocity(), ktw::scale(vertex_angular_speed, orthogonal_at_vertex)); 
 		vertex_velocity = ktw::difference(vertex_velocity, rb->getvelocity()); //Consider velocity relative to other body. 
@@ -566,27 +566,27 @@ bool rigidbody::collide(rigidbody *rb, double damping, ktw::point2* collisionpoi
 
 	//2: If one does, perform an elastic collision (w/ damping) on it and on the other object. 
 	//Computation of the net velocity at the impact position. 
-	ktw::point2 rb_position = rb->position(); 
-	ktw::point2 rb_impact_position_relative = ktw::from(rb_position, rb_intersections[0]); //AN: Since intersection was in absolute space. 
-	ktw::point2 rb_orthogonal_at_impact = ktw::hat(ktw::orthogonal(rb_impact_position_relative)); 
+	ktw::point rb_position = rb->position(); 
+	ktw::point rb_impact_position_relative = ktw::from(rb_position, rb_intersections[0]); //AN: Since intersection was in absolute space. 
+	ktw::point rb_orthogonal_at_impact = ktw::hat(ktw::orthogonal(rb_impact_position_relative)); 
 	double rb_impact_angular_speed = ktw::norm(rb_impact_position_relative) * rb->getangularvelocity(); 
-	ktw::point2 rb_impact_velocity = ktw::sum(rb->getvelocity(), ktw::scale(rb_impact_angular_speed, rb_orthogonal_at_impact)); 
+	ktw::point rb_impact_velocity = ktw::sum(rb->getvelocity(), ktw::scale(rb_impact_angular_speed, rb_orthogonal_at_impact)); 
 	//Impact position this timestep and the next one. 
-	ktw::point2 rb_impact_position = rb_intersections[0]; //AN: Avoid recomputation. 
-	ktw::point2 rb_impact_position_next = ktw::sum(rb_impact_position, rb_impact_velocity); 
+	ktw::point rb_impact_position = rb_intersections[0]; //AN: Avoid recomputation. 
+	ktw::point rb_impact_position_next = ktw::sum(rb_impact_position, rb_impact_velocity); 
 	//Compute final velocities via the elastic collision equation. 
 	double invmsum = mass + rb->getmass(); //Inverse of the sum of masses. 
 	double v1_c1_coeff = (mass - rb->getmass()) / invmsum, v1_c2_coeff = (2*rb->getmass()) / invmsum; 
 	double v2_c1_coeff = (2*mass) / invmsum, v2_c2_coeff = (rb->getmass() - mass) / invmsum; 
-	ktw::point2 v1_c1 = ktw::scale(v1_c1_coeff, vertex_velocity), v1_c2 = ktw::scale(v1_c2_coeff, rb_impact_velocity); 
-	ktw::point2 v2_c1 = ktw::scale(v2_c1_coeff, vertex_velocity), v2_c2 = ktw::scale(v2_c2_coeff, rb_impact_velocity); 
-	ktw::point2 v1 = ktw::scale(damping, ktw::sum(v1_c1, v1_c2)); //New velocity of vertex on THIS body. 
-	ktw::point2 v2 = ktw::scale(damping, ktw::sum(v2_c1, v2_c2)); //New velocity of vertex on OTHER body. 
+	ktw::point v1_c1 = ktw::scale(v1_c1_coeff, vertex_velocity), v1_c2 = ktw::scale(v1_c2_coeff, rb_impact_velocity); 
+	ktw::point v2_c1 = ktw::scale(v2_c1_coeff, vertex_velocity), v2_c2 = ktw::scale(v2_c2_coeff, rb_impact_velocity); 
+	ktw::point v1 = ktw::scale(damping, ktw::sum(v1_c1, v1_c2)); //New velocity of vertex on THIS body. 
+	ktw::point v2 = ktw::scale(damping, ktw::sum(v2_c1, v2_c2)); //New velocity of vertex on OTHER body. 
 
 	//3: Convert the change in velocity that results from the collision into a force and apply. 
 	//Change in velocity is an acceleration, times a mass produces a force over a small time (impulse). 
-	ktw::point2 f1 = ktw::scale(mass, ktw::difference(v1, vertex_velocity)); 
-	ktw::point2 f2 = ktw::scale(rb->getmass(), ktw::difference(v2, rb_impact_velocity)); 
+	ktw::point f1 = ktw::scale(mass, ktw::difference(v1, vertex_velocity)); 
+	ktw::point f2 = ktw::scale(rb->getmass(), ktw::difference(v2, rb_impact_velocity)); 
 
 	/*
 		Is it necessary to perform a reflection of the force vectors at this point? 
@@ -603,10 +603,10 @@ bool rigidbody::collide(rigidbody *rb, double damping, ktw::point2* collisionpoi
 	//4: To handle fixed objects, perform a spatial shift to be no longer overlapping. 
 	/* Outdated pairwise approach. Deprecated given the deoverlap static method. 
 	if(getmass() <= rb->getmass()) { //Shift the body with the lower mass (arbitrary). 
-		ktw::point2 shift = ktw::from(rb_impact_position, vertex_position); 
+		ktw::point shift = ktw::from(rb_impact_position, vertex_position); 
 		move(shift); 
 	} else {
-		ktw::point2 shift = ktw::from(vertex_position, rb_impact_position); 
+		ktw::point shift = ktw::from(vertex_position, rb_impact_position); 
 		rb->move(shift); 
 	}
 	//*/
@@ -630,7 +630,7 @@ void rigidbody::dampen(double multiplier) {
 	velocity.y *= multiplier; 
 }
 
-ktw::point2 rigidbody::getvelocity() {
+ktw::point rigidbody::getvelocity() {
 	return velocity; 
 }
 
@@ -654,12 +654,12 @@ void rigidbody::deoverlap(std::vector<rigidbody*> gons, double shift_distance) {
 		for(size_t j = 0; j < gons.size(); j++) {
 			if(i == j) continue; //Don't deoverlap with self. 
 			//1: Take the set of edgewise intersections of polygons...
-			std::vector<ktw::point2> sects; 
+			std::vector<ktw::point> sects; 
 			if(gons[i]->polygon_intersection(*gons[j], &sects)) {
 				//1.5: Indicate that body i is in contact with body j. 
 				//gons[i]->make_contact(gons[j]); //AN<24 April '22>: Seems to cause a hard crash. 
 				//2: If any exist, compute the average position of all those points. 
-				ktw::point2 average_intersection{0.0, 0.0}; 
+				ktw::point average_intersection{0.0, 0.0}; 
 				for(size_t k = 0; k < sects.size(); k++) average_intersection = ktw::sum(average_intersection, sects[k]); 
 				average_intersection = ktw::scale(1.0 / sects.size(), average_intersection); 
 				//3: Produce a unit vector from that average position to the centerpoint of the polygon to shift (preserve not shifting inf-mass). 
@@ -684,50 +684,50 @@ void rigidbody::deoverlap(std::vector<rigidbody*> gons, double shift_distance) {
 					continue; 
 				} else if(i_dontshift) {
 					//Shift j. 
-					ktw::point2 avgint_to_j = ktw::from(average_intersection, gons[j]->position()); 
-					ktw::point2 shifter = ktw::scale(shift_distance, ktw::hat(avgint_to_j)); 
+					ktw::point avgint_to_j = ktw::from(average_intersection, gons[j]->position()); 
+					ktw::point shifter = ktw::scale(shift_distance, ktw::hat(avgint_to_j)); 
 					gons[j]->move(shifter); 
 					//Cancel j linear velocity component in direction of shift. 
-					ktw::point2 shifter_orth = {-shifter.y, shifter.x}; 
-					ktw::point2 jvel = gons[j]->getvelocity(); 
+					ktw::point shifter_orth = {-shifter.y, shifter.x}; 
+					ktw::point jvel = gons[j]->getvelocity(); 
 					if(acos(ktw::dot(jvel, ktw::scale(-1.0, shifter))) < ktw::pi/4.0) { //Only cancel if moving towards the average intersection. 
-						ktw::point2 jvel_cancel = ktw::proj(jvel, shifter_orth); 
+						ktw::point jvel_cancel = ktw::proj(jvel, shifter_orth); 
 						gons[j]->setvelocity(jvel_cancel); 
 					}
 				} else if(j_dontshift) {
 					//Shift i. 
-					ktw::point2 avgint_to_i = ktw::from(average_intersection, gons[i]->position()); 
-					ktw::point2 shifter = ktw::scale(shift_distance, ktw::hat(avgint_to_i)); 
+					ktw::point avgint_to_i = ktw::from(average_intersection, gons[i]->position()); 
+					ktw::point shifter = ktw::scale(shift_distance, ktw::hat(avgint_to_i)); 
 					gons[i]->move(shifter); 
 					//Cancel i linear velocity component in direction of shift. 
-					ktw::point2 shifter_orth = {-shifter.y, shifter.x}; 
-					ktw::point2 ivel = gons[i]->getvelocity(); 
+					ktw::point shifter_orth = {-shifter.y, shifter.x}; 
+					ktw::point ivel = gons[i]->getvelocity(); 
 					if(acos(ktw::dot(ivel, ktw::scale(-1.0, shifter))) < ktw::pi/4.0) { //Only cancel if moving towards the average intersection. 
-						ktw::point2 ivel_cancel = ktw::proj(ivel, shifter_orth); 
+						ktw::point ivel_cancel = ktw::proj(ivel, shifter_orth); 
 						gons[i]->setvelocity(ivel_cancel); 
 					}
 				} else {
 					//Shift both. 
-					ktw::point2 avgint_to_j = ktw::from(average_intersection, gons[j]->position()); 
-					ktw::point2 avgint_to_i = ktw::from(average_intersection, gons[i]->position()); 
-					ktw::point2 jshifter = ktw::scale(shift_distance, ktw::hat(avgint_to_j)); 
-					ktw::point2 ishifter = ktw::scale(shift_distance, ktw::hat(avgint_to_i)); 
+					ktw::point avgint_to_j = ktw::from(average_intersection, gons[j]->position()); 
+					ktw::point avgint_to_i = ktw::from(average_intersection, gons[i]->position()); 
+					ktw::point jshifter = ktw::scale(shift_distance, ktw::hat(avgint_to_j)); 
+					ktw::point ishifter = ktw::scale(shift_distance, ktw::hat(avgint_to_i)); 
 					gons[j]->move(jshifter); 
 					gons[i]->move(ishifter); 
 					//Cancel j linear velocity component in direction of shift. 
-					ktw::point2 jshifter_orth = {-jshifter.y, jshifter.x}; 
-					ktw::point2 jvel = gons[j]->getvelocity(); 
-					ktw::point2 jvel_cancel; 
+					ktw::point jshifter_orth = {-jshifter.y, jshifter.x}; 
+					ktw::point jvel = gons[j]->getvelocity(); 
+					ktw::point jvel_cancel; 
 					if(acos(ktw::dot(jvel, ktw::scale(-1.0, jshifter))) < ktw::pi/4.0) { //Only cancel if moving towards the average intersection. 
-						ktw::point2 jvel_cancel = ktw::proj(jvel, jshifter_orth); 
+						ktw::point jvel_cancel = ktw::proj(jvel, jshifter_orth); 
 						gons[j]->setvelocity(jvel_cancel); 
 						//gons[i]->accelerate(ktw::proj(jvel, jshifter), 0.0); //Transfer cancelled velocity component to other shape's velocity (17 April '22). 
 					}
 					//Cancel i linear velocity component in direction of shift. 
-					ktw::point2 ishifter_orth = {-ishifter.y, ishifter.x}; 
-					ktw::point2 ivel = gons[i]->getvelocity(); 
+					ktw::point ishifter_orth = {-ishifter.y, ishifter.x}; 
+					ktw::point ivel = gons[i]->getvelocity(); 
 					if(acos(ktw::dot(ivel, ktw::scale(-1.0, ishifter))) < ktw::pi/4.0) { //Only cancel if moving towards the average intersection. 
-						ktw::point2 ivel_cancel = ktw::proj(ivel, ishifter_orth); 
+						ktw::point ivel_cancel = ktw::proj(ivel, ishifter_orth); 
 						gons[i]->setvelocity(ivel_cancel); 
 						//gons[j]->accelerate(ktw::proj(ivel, ishifter), 0.0); //Transfer cancelled velocity component to other shape's velocity (17 April '22). 
 					}
@@ -738,13 +738,13 @@ void rigidbody::deoverlap(std::vector<rigidbody*> gons, double shift_distance) {
 	}
 }
 
-void rigidbody::accelerate(ktw::point2 acc_lin, double acc_ang) {
+void rigidbody::accelerate(ktw::point acc_lin, double acc_ang) {
 	if(mass == std::numeric_limits<double>::max() || mass == 0.0) return; //Disregard fixed objects. 
 	velocity = ktw::sum(velocity, acc_lin); 
 	angular_velocity += acc_ang; 
 }
 
-void rigidbody::tick_all(std::vector<rigidbody*> gons, double gravitation, double collision_damping, double air_damping, double conductivity, double deoverlap_setdist, double deoverlap_scale, unsigned deoverlap_iterations, ktw::point2 *collisionpoint) {
+void rigidbody::tick_all(std::vector<rigidbody*> gons, double gravitation, double collision_damping, double air_damping, double conductivity, double deoverlap_setdist, double deoverlap_scale, unsigned deoverlap_iterations, ktw::point *collisionpoint) {
 	//Apply uniform gravitational force to all gons. 
 	//for(size_t i = 0; i < gons.size(); i++) gons[i]->force({0.0, gravitation}); 
 
@@ -779,7 +779,7 @@ void rigidbody::setmass(double nmass) {
 	mass = nmass; 
 }
 
-void rigidbody::setvelocity(ktw::point2 nvelocity) {
+void rigidbody::setvelocity(ktw::point nvelocity) {
 	velocity = nvelocity; 
 }
 

@@ -104,7 +104,7 @@ template <typename T> void draw_bargraph(std::vector<T> v, double x, double y, d
 }
 
 //Mouse coordinate utility functions. 
-ktw::point2 mouse(sf::RenderWindow* w = mw) { return ktw::point2{(double) sf::Mouse::getPosition(*w).x, (double) sf::Mouse::getPosition(*w).y}; } //Mouse position as a point. 
+ktw::point mouse(sf::RenderWindow* w = mw) { return ktw::point{(double) sf::Mouse::getPosition(*w).x, (double) sf::Mouse::getPosition(*w).y}; } //Mouse position as a point. 
 double mx(sf::RenderWindow* w = mw) { return sf::Mouse::getPosition(*w).x; }
 double my(sf::RenderWindow* w = mw) { return sf::Mouse::getPosition(*w).y; }
 

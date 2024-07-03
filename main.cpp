@@ -24,8 +24,8 @@ EST: <date>
 
 #include <X11/Xlib.h>   
 
-#include "/home/ktw/Corporate/Programming/c++/ktw-lib/ktwgen.hpp"
-#include "/home/ktw/Corporate/Programming/c++/ktw-lib/ktwmath.hpp"
+#include "/home/kyle/Corporate/Programming/c++/ktw-lib/ktwgen.hpp"
+#include "/home/kyle/Corporate/Programming/c++/ktw-lib/ktwmath.hpp"
 #include "./polygon_rigidbody.cpp"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,9 +49,9 @@ bool diagnostic = true;
 bool dograv = true; 
 bool doattract = false; 
 
-ktw::point2 collisionpoint = {0.0, 0.0}; 
+ktw::point collisionpoint = {0.0, 0.0}; 
 
-std::vector<ktw::point2> drawing_new_rigidbody; 
+std::vector<ktw::point> drawing_new_rigidbody; 
 
 //Convert a body's temperature to a displayable colour (15 April '22). 
 sf::Color temperature_to_colour(double temp, double midpoint_temp = 273.0) {
@@ -75,9 +75,9 @@ private:
 	//Internal pointmass structure
 	struct pointmass {
 		double m; //Mass of this body. 
-		ktw::point2 x, dx; //Position and velocity. 
+		ktw::point x, dx; //Position and velocity. 
 		//Methods. 
-		void force(ktw::point2 f); //Accelerate (Euler integrate) this body according to Newton's second law. 
+		void force(ktw::point f); //Accelerate (Euler integrate) this body according to Newton's second law. 
 		void dampen(double d); //Multiply the velocity of this body by some factor, typically 0<d<1. 
 		void tick(); //Advance this body one unit through time. 
 	}; 
@@ -97,7 +97,7 @@ public:
 	//Force affecting. 
 	//...
 	//Physical interaction. 
-	bool collide(rigidbody *rb, double damping = 1.0, ktw::point2* collisionpoint = NULL); //Elastically collide with some other rigidbody, if applicable. 
+	bool collide(rigidbody *rb, double damping = 1.0, ktw::point* collisionpoint = NULL); //Elastically collide with some other rigidbody, if applicable. 
 	//Simulation. 
 	void tick(); //Advance one simulation timestep. 
 }; 
@@ -106,7 +106,7 @@ public:
 	ktw::softbody
 */
 
-void softbody::pointmass::force(ktw::point2 f) {
+void softbody::pointmass::force(ktw::point f) {
 	dx = ktw::sum(dx, ktw::scale(1.0 / m, f)); 
 }
 
@@ -127,13 +127,13 @@ void softbody::spring::exert() {
 	l = ktw::distance(a->x, b->x); 
 	double f = k * (l - l0); 
 	//Handle damping. 
-	ktw::point2 atob = ktw::hat(ktw::difference(b->x, a->x)); 
-	ktw::point2 avtobv = ktw::difference(b->dx, a->dx); 
+	ktw::point atob = ktw::hat(ktw::difference(b->x, a->x)); 
+	ktw::point avtobv = ktw::difference(b->dx, a->dx); 
 	double damp = d * ktw::dot(atob, avtobv); //How much the points are coming together / moving apart times the damping factor. 
 	f += damp; //Incorporate damping. 
 	atob = ktw::scale(f, atob); //Scale vector pointing between massive bodies by the force exerted. 
 	//Apply force to bodies. 
-	ktw::point2 btoa = ktw::hat(ktw::difference(a->x, b->x)); 
+	ktw::point btoa = ktw::hat(ktw::difference(a->x, b->x)); 
 	btoa = ktw::scale(f, btoa); 
 	a->force(atob); 
 	b->force(btoa); 
@@ -174,10 +174,10 @@ void tick(sf::RenderWindow* w) {
 	//Mouse forces. 
 	if(rmousedown) {
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
-			ktw::point2 tomouse = ktw::scale(1.0 * ktw::distance(gons[closest_to_mouse_index]->position(), mouse()), ktw::hat(ktw::from(gons[closest_to_mouse_index]->position(), mouse()))); 
+			ktw::point tomouse = ktw::scale(1.0 * ktw::distance(gons[closest_to_mouse_index]->position(), mouse()), ktw::hat(ktw::from(gons[closest_to_mouse_index]->position(), mouse()))); 
 			gons[closest_to_mouse_index]->force(tomouse); 
 		} else {
-			ktw::point2 tomouse = ktw::scale(0.5 * ktw::distance(gons[closest_to_mouse_index]->position(), mouse()), ktw::hat(ktw::from(gons[closest_to_mouse_index]->position(), mouse()))); 
+			ktw::point tomouse = ktw::scale(0.5 * ktw::distance(gons[closest_to_mouse_index]->position(), mouse()), ktw::hat(ktw::from(gons[closest_to_mouse_index]->position(), mouse()))); 
 			gons[closest_to_mouse_index]->force(tomouse); 
 		}
 	} else { //Find gon which is closes to cursor only if the mouse is not held. 
@@ -226,17 +226,17 @@ void frame(sf::RenderWindow* w) {
 			if(diagnostic) draw_cross(gons[i]->position().x + gons[i]->vertex(j).x, gons[i]->position().y + gons[i]->vertex(j).y, 5.0, sf::Color::Magenta); 
 
 			/* (31 March '22) Correct production of vertex velocity vectors. 
-			ktw::point2 pos = gons[i]->position(); //Position in absolute space. 
-			ktw::point2 vert = gons[i]->vertex(j); //Position relative to body position. 
+			ktw::point pos = gons[i]->position(); //Position in absolute space. 
+			ktw::point vert = gons[i]->vertex(j); //Position relative to body position. 
 
-			ktw::point2 pos_plus_vert{pos.x + vert.x, pos.y + vert.y}; 
-			ktw::point2 vert_linvel = gons[i]->getvelocity(); 
-			ktw::point2 radial = ktw::from(pos, pos_plus_vert); 
+			ktw::point pos_plus_vert{pos.x + vert.x, pos.y + vert.y}; 
+			ktw::point vert_linvel = gons[i]->getvelocity(); 
+			ktw::point radial = ktw::from(pos, pos_plus_vert); 
 			double vert_angspeed = ktw::norm(vert) * gons[i]->getangularvelocity(); 
 			radial = ktw::hat(radial); 
 			radial = {vert_angspeed * -radial.y, vert_angspeed * radial.x}; //Perpendicularise. 
 
-			ktw::point2 vert_vel{radial.x + vert_linvel.x, radial.y + vert_linvel.y}; 
+			ktw::point vert_vel{radial.x + vert_linvel.x, radial.y + vert_linvel.y}; 
 
 			draw_arrow(pos.x + vert.x, pos.y + vert.y, pos.x + vert.x + vert_vel.x, pos.y + vert.y + vert_vel.y, sf::Color::Green); 
 			//*/
@@ -361,7 +361,7 @@ int main() {
 
 	sf::Thread rt(&renderthread, &w);
 	rt.launch();
-	std::clock_t fps_t0 = std::clock();  //Timestamp for FPS. 
+	auto fps_t0 = ktw::timestamp();  //Timestamp for FPS. 
 	while(w.isOpen()) {
 		//Handle misc events.
 		sf::Event event;
@@ -378,7 +378,7 @@ int main() {
 			tps = (long double) ticks_since_last / ktw::dur(fps_t0); //Compute TPS. 
 			frames_since_last = 0; //Reset frames-since-last check. 
 			ticks_since_last = 0; 
-			fps_t0 = std::clock(); //Reset timer. 
+			fps_t0 = ktw::timestamp(); //Reset timer. 
 		}
 
 		//Wait some time per tick. 
